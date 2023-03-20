@@ -5,6 +5,7 @@ const { body, validationResult } = require('express-validator');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const fetchuser = require('../midlleware/fetchuser');
+let success="false";
 
 const JWtSecret = 'Hey User!!';
 
@@ -17,13 +18,15 @@ router.post('/createUser', [
     // return if there is error
     const errors = validationResult(req);
     if (!errors.isEmpty()){
-        return res.status(400).json({errors: errors.array()});
+        success=false
+        return res.status(400).json({success,errors: errors.array()});
     }
     // check whether user is already registered or not
     try {
         let User = await user.findOne({email:req.body.email});
         if (User){
-            return res.status(400).json({error: "User is already registered"})
+            success=false
+            return res.status(400).json({success,error: "User is already registered"})
         }
         // create a new user
         const salt = await bcrypt.genSalt(10);
@@ -41,10 +44,12 @@ router.post('/createUser', [
         }
 
         const jwtData = jwt.sign(data, JWtSecret);
-
-        res.json({jwtData});
+        success=true
+        res.json({success,jwtData});
     }
-    catch (error) {res.status(500).send("Error!")}
+    catch (error) {
+        console.log("error"+error)
+        res.status(500).send("Error")}
 })
 
 // Route2: Authenticate a User using : POST "/api/auth/login". No Login Required
@@ -63,11 +68,14 @@ router.post('/login',[
     try {
         let User = await user.findOne({email});
         if(!User){
-            return res.status(400).json({error:'Please try to login with correct credentials'});
+            success=false;
+            return res.status(400).json({success,error:'Please try to login with correct credentials'});
         }
         
         const passCompare = await bcrypt.compare(password, User.password);
-        if(!passCompare){return res.status(400).json({errors: "Please try to login with write credentials "})}
+        if(!passCompare){
+            success=false;
+            return res.status(400).json({success,errors: "Please try to login with correct credentials "})}
 
         const data = {
             User:{
@@ -75,7 +83,8 @@ router.post('/login',[
             }
         }
         const authToken = jwt.sign(data, JWtSecret);
-        res.json({authToken});
+        success=true;
+        res.json({success,authToken});
 
     } catch (error) {
         console.log(error.message);

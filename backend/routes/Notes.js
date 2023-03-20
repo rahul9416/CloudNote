@@ -16,20 +16,18 @@ router.get('/fetchallnotes', fetchuser,async(req,res)=>{
 })
 
 // Route 2: Store the notes using post: "/api/notes/addnotes". Login Required
-router.post('/addnotes', fetchuser,[
-    body('title', 'Enter a valid title').isLength({min:3}),
-    body('description', 'Description must be of minimum 5 characters').isLength({min:5})
-],async(req,res)=>{
+router.post('/addnotes', fetchuser,async(req,res)=>{
     try {
-
-        const {title,description,tag} = req.body;
+        const {title,description,color,tag} = req.body;
+        
     // If there are errors, return bad request
     const errors = validationResult(req);
     if(!errors.isEmpty()){return res.status(400).json({error: errors.array()})}
 
     const note = new Notes({
-        title,description,tag,user : req.user.id
+        title,description,color,tag,user : req.user.id
     })
+
 
     const saveNote = await note.save();
     res.json({saveNote})
@@ -41,17 +39,15 @@ router.post('/addnotes', fetchuser,[
 
 // Route 3: Update an existing note using put: "/api/notes/updatenote/:id". Login Required
 
-router.put('/updatenote/:id',fetchuser, [
-    body('title', 'Enter a valid title').isLength({min:3}),
-    body('description', 'Description must be of minimum 5 characters').isLength({min:5})
-],async (req, res)=> {
+router.put('/updatenote/:id',fetchuser, async (req, res)=> {
     try {
-        const {title,description,tag} = req.body;
+        const {title,description,tag,date} = req.body;
         
         const newNote = {};
         if(title){newNote.title = title};
         if(description){newNote.description = description};
         if(tag){newNote.tag = tag};
+        if(date){newNote.date = date};
 
         // Find the note and update it
 
